@@ -116,7 +116,7 @@ def kompiliere_scad_zu_stl(scad_code):
     try:
         # Passe den Pfad an, falls dein Mac OpenSCAD woanders hat
         result = subprocess.run(
-            ['/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD', '-o', 'output.stl', 'temp_modell.scad'],
+           ['openscad', '-o', 'output.stl', 'temp_modell.scad'],
             capture_output=True,
             text=True
         )
