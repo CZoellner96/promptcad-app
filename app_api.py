@@ -6,8 +6,11 @@ import re
 import google.generativeai as genai
 from streamlit_stl import stl_from_file
 
-# Statt deinen Key direkt reinzuschreiben, zieht Streamlit ihn sich später aus einem Tresor:
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+# 1. Wir holen den Key sicher aus dem Cloud-Tresor und weisen ihn der Variable zu:
+API_KEY = st.secrets["GEMINI_API_KEY"]
+
+# 2. Wir konfigurieren die KI:
+genai.configure(api_key=API_KEY)
 
 # Wir nutzen das schnelle Flash-Modell für zügige Generierung
 model = genai.GenerativeModel('gemini-2.5-flash')
