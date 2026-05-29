@@ -4,6 +4,7 @@ import os
 import time
 import re
 import google.generativeai as genai
+from google.api_core.exceptions import ResourceExhausted
 from streamlit_stl import stl_from_file
 
 # 1. Wir holen den Key sicher aus dem Cloud-Tresor und weisen ihn der Variable zu:
@@ -225,32 +226,36 @@ if button_geklickt or st.session_state.generieren_aktiv:
         with st.status("Starte KI-Generierung...", expanded=True) as status:
             st.write("🧠 Gemini 2.5 Flash schreibt den Code...")
             
-            # 1. API-Aufruf
-            scad_code = generiere_echten_code(user_input, wandstaerke, deckel_aktiv, gridfinity_aktiv)
-            
-            st.write("🛠️ Kompiliere OpenSCAD-Code (Versuch 1)...")
-            erfolg, fehlermeldung = kompiliere_scad_zu_stl(scad_code)
-            
-            # --- ECHTES SELF-HEALING ---
-            if not erfolg:
-                st.write("⚠️ **Syntax-Fehler! Sende Error-Log zurück an die KI...**")
-                st.caption(f"`{fehlermeldung.strip()}`")
+            try: # 👈 HIER STARTET DER AIRBAG
+                # 1. API-Aufruf
+                scad_code = generiere_echten_code(user_input, wandstaerke, deckel_aktiv, gridfinity_aktiv)
                 
-                # 2. API-Aufruf zur Reparatur
-                st.write("🔄 KI analysiert Fehler und repariert den Code...")
-                scad_code = repariere_code_mit_ki(scad_code, fehlermeldung)
-                
-                st.write("🛠️ Kompiliere reparierten Code (Versuch 2)...")
+                st.write("🛠️ Kompiliere OpenSCAD-Code (Versuch 1)...")
                 erfolg, fehlermeldung = kompiliere_scad_zu_stl(scad_code)
                 
-            if erfolg:
-                status.update(label="Modell erfolgreich generiert!", state="complete", expanded=False)
-                st.session_state.modell_generiert = True
-                # Den finalen (ggf. reparierten) Code speichern wir in den State für die Konsole
-                st.session_state.letzter_code = scad_code
-            else:
-                status.update(label="KI konnte den Code nicht reparieren. Versuch einen einfacheren Prompt.", state="error", expanded=True)
-
+                # --- ECHTES SELF-HEALING ---
+                if not erfolg:
+                    st.write("⚠️ **Syntax-Fehler! Sende Error-Log zurück an die KI...**")
+                    st.caption(f"`{fehlermeldung.strip()}`")
+                    
+                    # 2. API-Aufruf zur Reparatur
+                    st.write("🔄 KI analysiert Fehler und repariert den Code...")
+                    scad_code = repariere_code_mit_ki(scad_code, fehlermeldung)
+                    
+                    st.write("🛠️ Kompiliere reparierten Code (Versuch 2)...")
+                    erfolg, fehlermeldung = kompiliere_scad_zu_stl(scad_code)
+                    
+                if erfolg:
+                    status.update(label="Modell erfolgreich generiert!", state="complete", expanded=False)
+                    st.session_state.modell_generiert = True
+                    # Den finalen (ggf. reparierten) Code speichern wir in den State für die Konsole
+                    st.session_state.letzter_code = scad_code
+                else:
+                    status.update(label="KI konnte den Code nicht reparieren. Versuch einen einfacheren Prompt.", state="error", expanded=True)
+            
+            except ResourceExhausted: # 👈 HIER WIRD DER FEHLER ABGEFANGEN
+                status.update(label="Google API Limit erreicht", state="error", expanded=True)
+                st.error("🚦 **Auslastungsgrenze erreicht:** Wir haben zu viele Anfragen in kurzer Zeit an Google gesendet. Bitte warte ca. 60 Sekunden und klicke dann erneut auf 'Modell generieren'.")
 # --- AUSGABE ---
 if st.session_state.modell_generiert:
     st.success("🎉 Modell bereit zum Download!")
