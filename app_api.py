@@ -49,15 +49,16 @@ def generiere_echten_code(prompt, wandstaerke, deckel_aktiv, gridfinity_aktiv):
     Befolge diese Regeln STRIKT:
     - NUR CODE: Antworte AUSSCHLIESSLICH mit gültigem OpenSCAD-Code. Schreibe absolut keine Erklärungen, keine Begrüßung und keine Kommentare vor oder nach dem Code.
     - KEIN MARKDOWN: Verwende keine Markdown-Formatierungen (wie ```openscad oder ```). Beginne sofort in der ersten Zeile mit dem Programmcode.
-    - PARAMETRISCH: Definiere alle wichtigen Maße (Länge, Breite, Höhe, Wandstärke, Lochabstände) als klar benannte Variablen ganz oben im Skript, bevor du die Geometrie aufbaust.
-    - GLATTE RUNDUNGEN: Setze ganz oben im Skript immer die Variable $fn = 60;, damit Zylinder und Kurven beim 3D-Druck schön rund und nicht eckig werden.
-    - 3D-DRUCK LOGIK: Bedenke, dass die Modelle mit FDM-Druckern gedruckt werden. Wandstärken sollten immer mindestens 1.2mm bis 1.5mm betragen. Vermeide extreme Überhänge.
-    - SAUBERE CSG-OPERATIONEN: Nutze Standard-Funktionen wie union(), difference() und intersection() sauber und rücke den Code für gute Lesbarkeit ein.
-    - GRIDFINITY WISSENSBASIS: Wenn ein "Gridfinity"-Raster gefordert wird, MUSST du zwingend das folgende Basis-Modul verwenden und es aufrufen (grid_x und grid_y sind die Rastergrößen). Passe die Höhe an den Nutzerprompt an:
+    - PARAMETRISCH: Definiere alle wichtigen Maße (Länge, Breite, Höhe, Wandstärke) als klar benannte Variablen ganz oben im Skript.
+    - GLATTE RUNDUNGEN: Setze ganz oben im Skript immer die Variable $fn = 60;.
+    - SAUBERE CSG: Vermeide Z-Fighting, indem du bei difference() die abziehenden Objekte immer etwas länger machst (z.B. -0.1 verschieben und +0.2 länger machen).
+    
+    - GRIDFINITY WISSENSBASIS: Wenn ein "Gridfinity"-Raster gefordert wird, MUSST du zwingend das folgende parametrische Basis-Modul verwenden. Rufe es am Ende einfach mit den passenden Werten auf (z.B. gridfinity_base(2, 3, 40, 2);):
       
-      module gridfinity_base(grid_x, grid_y) {
+      module gridfinity_base(grid_x, grid_y, height, wall) {
           difference() {
               union() {
+                  // Raster-Bodenplatten
                   for(i=[0:grid_x-1], j=[0:grid_y-1]) {
                       translate([i*42, j*42, 0]) {
                           hull() {
@@ -66,18 +67,19 @@ def generiere_echten_code(prompt, wandstaerke, deckel_aktiv, gridfinity_aktiv):
                           }
                       }
                   }
-                  translate([0, 0, 4]) cube([grid_x*42, grid_y*42, 30]);
+                  // Hauptkörper
+                  translate([0, 0, 4]) cube([grid_x*42, grid_y*42, height-4]);
               }
-              // Aushöhlung der Box
-              translate([2, 2, 6]) cube([grid_x*42-4, grid_y*42-4, 35]);
+              // Aushöhlung (Boden bleibt über dem Raster 2mm dick)
+              translate([wall, wall, 6]) cube([grid_x*42 - 2*wall, grid_y*42 - 2*wall, height]);
               
-              // Magnetlöcher (4 Stück pro Rasterfeld, d=6.5mm)
+              // Magnetlöcher (d=6.5mm)
               for(i=[0:grid_x-1], j=[0:grid_y-1]) {
                   translate([i*42, j*42, 0]) {
-                      translate([8, 8, -1]) cylinder(h=4, d=6.5);
-                      translate([34, 8, -1]) cylinder(h=4, d=6.5);
-                      translate([8, 34, -1]) cylinder(h=4, d=6.5);
-                      translate([34, 34, -1]) cylinder(h=4, d=6.5);
+                      translate([8, 8, -0.1]) cylinder(h=4.2, d=6.5);
+                      translate([34, 8, -0.1]) cylinder(h=4.2, d=6.5);
+                      translate([8, 34, -0.1]) cylinder(h=4.2, d=6.5);
+                      translate([34, 34, -0.1]) cylinder(h=4.2, d=6.5);
                   }
               }
           }
