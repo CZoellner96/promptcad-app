@@ -84,7 +84,7 @@ def generiere_echten_code(prompt, wandstaerke, deckel_aktiv, gridfinity_aktiv):
               }
           }
       }
-    """
+    
 
     - DECKEL WISSENSBASIS: Wenn der Nutzer einen "Deckel" oder "passenden Deckel" fordert, MUSST du zwingend dieses Modul verwenden. Platziere den Deckel mit 'translate' einfach neben der Box (z.B. translate([breite + 10, 0, 0])).
       
@@ -99,7 +99,8 @@ def generiere_echten_code(prompt, wandstaerke, deckel_aktiv, gridfinity_aktiv):
                   cube([breite - 2*wandstaerke - 0.4, tiefe - 2*wandstaerke - 0.4, 2]);
           }
       }
-        
+        """
+    
     # Nutzer-Wünsche zusammenbauen
     user_kontext = f"Erstelle folgendes 3D-Modell: {prompt}. Die Wandstärke soll {wandstaerke}mm betragen."
     if gridfinity_aktiv:
