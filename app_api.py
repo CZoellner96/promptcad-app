@@ -85,7 +85,21 @@ def generiere_echten_code(prompt, wandstaerke, deckel_aktiv, gridfinity_aktiv):
           }
       }
     """
-    
+
+    - DECKEL WISSENSBASIS: Wenn der Nutzer einen "Deckel" oder "passenden Deckel" fordert, MUSST du zwingend dieses Modul verwenden. Platziere den Deckel mit 'translate' einfach neben der Box (z.B. translate([breite + 10, 0, 0])).
+      
+      module deckel_mit_falz(breite, tiefe, wandstaerke) {
+          union() {
+              // Obere flache Abdeckung (liegt auf dem Rand auf)
+              cube([breite, tiefe, 2]);
+              
+              // Innerer Falz (rutscht in die Box)
+              // 0.2mm Toleranz pro Seite abgezogen, damit es nach dem 3D-Druck nicht klemmt!
+              translate([wandstaerke + 0.2, wandstaerke + 0.2, -2]) 
+                  cube([breite - 2*wandstaerke - 0.4, tiefe - 2*wandstaerke - 0.4, 2]);
+          }
+      }
+        
     # Nutzer-Wünsche zusammenbauen
     user_kontext = f"Erstelle folgendes 3D-Modell: {prompt}. Die Wandstärke soll {wandstaerke}mm betragen."
     if gridfinity_aktiv:
